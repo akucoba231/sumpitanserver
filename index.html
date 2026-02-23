@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web MQTT Client</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(10px);
+      padding: 20px 24px;
+      border-radius: 16px;
+      width: 420px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    h2 { margin-top: 0; text-align: center; }
+
+    label { font-size: 13px; opacity: 0.85; }
+
+    input, select, textarea {
+      width: 100%;
+      margin-top: 4px;
+      margin-bottom: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+
+    textarea { height: 120px; resize: none; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .connect { background: #27ae60; color: #fff; }
+    .resetBtn { background: #e74c3c; color: #fff; }
+
+    .status {
+      font-size: 12px;
+      margin-bottom: 10px;
+      opacity: 0.9;
+      text-align: center;
+    }
+
+    .resetStatus {
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .true { color: #2ecc71; }
+    .false { color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Papan Sumpit MQTT</h2>
+    <div class="status" id="status">Disconnected</div>
+
+    <div class="row">
+      <div>
+        <label>Protocol</label>
+        <select id="protocol">
+          <option value="ws">ws</option>
+          <option value="wss">wss</option>
+        </select>
+      </div>
+      <div>
+        <label>Port</label>
+        <input id="port" value="8000" />
+      </div>
+    </div>
+
+    <label>Server URL</label>
+    <input id="host" value="broker.hivemq.com" />
+
+    <button class="connect" onclick="connectMQTT()">Connect</button>
+
+    <div class="resetStatus" id="resetStatus">Reset: FALSE</div>
+    <button class="resetBtn" onclick="sendReset()">RESET</button>
+
+    <label>Nilai Sumpitan<span style="display: none;">(sumpit01/value)</span></label>
+    <textarea id="log" readonly></textarea>
+  </div>
+
+<script>
+let client = null;
+
+const TOPIC_RESET = "sumpit01/reset";
+const TOPIC_VALUE = "sumpit01/value";
+
+function connectMQTT() {
+  const protocol = document.getElementById("protocol").value;
+  const host = document.getElementById("host").value;
+  const port = document.getElementById("port").value;
+
+  const url = `${protocol}://${host}:${port}/mqtt`;
+
+  client = mqtt.connect(url);
+
+  client.on("connect", () => {
+    document.getElementById("status").innerText = "Connected";
+    client.subscribe(TOPIC_RESET);
+    client.subscribe(TOPIC_VALUE);
+    log("Score: "); //+ TOPIC_VALUE);
+  });
+
+  client.on("message", (topic, payload) => {
+    const msg = payload.toString();
+
+    if (topic === TOPIC_RESET) {
+      updateResetStatus(msg);
+    }
+
+    if (topic === TOPIC_VALUE) {
+      log(msg);
+    }
+  });
+
+  client.on("error", (err) => {
+    document.getElementById("status").innerText = "Error";
+    log("Error: " + err);
+  });
+}
+
+function updateResetStatus(value) {
+  const el = document.getElementById("resetStatus");
+
+  if (value === "1") {
+    el.innerText = "Reset: TRUE";
+    el.className = "resetStatus true";
+  } else {
+    el.innerText = "Reset: FALSE";
+    el.className = "resetStatus false";
+  }
+}
+
+function sendReset() {
+  if (!client) return;
+  client.publish(TOPIC_RESET, "1");
+}
+
+function log(text) {
+  const area = document.getElementById("log");
+  area.value += text + "\n";
+  area.scrollTop = area.scrollHeight;
+}
+</script>
+</body>
+      </html>
