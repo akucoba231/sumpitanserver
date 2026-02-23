@@ -115,11 +115,31 @@ let client = null;
 const TOPIC_RESET = "sumpit01/reset";
 const TOPIC_VALUE = "sumpit01/value";
 
+  let protocol = document.getElementById("protocol"); //.value;
+  let port = document.getElementById("port"); //.value;
+  let buPort = port;
+  port.value = 8000;
+  protocol.onchange = (e) =>{
+    let tmp = e.target.value;
+  console.log(protocol.value);
+  if(typeof port === "string" ){
+    port = buPort;
+  }
+    if(tmp == "wss"){
+      port.value = 8884;
+    }
+    else {
+      port.value = 8000;
+    }
+  }
+  
 function connectMQTT() {
-  const protocol = document.getElementById("protocol").value;
   const host = document.getElementById("host").value;
-  const port = document.getElementById("port").value;
+  
+  console.log(protocol.value);
 
+  protocol = protocol.value;
+  port = port.value;
   const url = `${protocol}://${host}:${port}/mqtt`;
 
   client = mqtt.connect(url);
@@ -173,4 +193,4 @@ function log(text) {
 }
 </script>
 </body>
-      </html>
+</html>
