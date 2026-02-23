@@ -163,7 +163,7 @@ function updateResetStatus(value) {
 
 function sendReset() {
   if (!client) return;
-  client.publish(TOPIC_RESET, "1");
+  client.publish(TOPIC_RESET, "1", {retain: true});
 }
 
 function log(text) {
